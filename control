@@ -1,0 +1,9 @@
+Package: com.myrepo.crottok
+Name: Crot Tok
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Личный мод для TikTok: подмена региона, питомец Крот, Material You и 10 функций.
+Maintainer: Me <me@example.com>
+Author: Me <me@example.com>
+Section: Tweaks
+Depends: mobilesubstrate
