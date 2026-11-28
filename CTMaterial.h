@@ -14,3 +14,8 @@ UIColor *CTPrimary(void);
 UIColor *CTContainer(void);
 UIColor *CTOnContainer(void);
 UIColor *CTOnPrimary(void);
+
+BOOL CTParseHex(NSString *s, unsigned int *out);
+NSString *CTHexString(unsigned int v);
+unsigned int CTCurrentPrimaryHex(void);
+void CTResetAccent(void);

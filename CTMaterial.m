@@ -49,8 +49,43 @@ NSInteger CTAccentIndex(void) {
     return i < 0 ? 0 : (i >= n ? n - 1 : i);
 }
 
-static unsigned int P(void) { return [CTPalettes()[CTAccentIndex()][@"p"] unsignedIntValue]; }
-static unsigned int C(void) { return [CTPalettes()[CTAccentIndex()][@"c"] unsignedIntValue]; }
+BOOL CTParseHex(NSString *s, unsigned int *out) {
+    s = [[s stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] uppercaseString];
+    if ([s hasPrefix:@"#"]) s = [s substringFromIndex:1];
+    if (s.length != 6) return NO;
+    NSCharacterSet *hexSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEF"];
+    if ([s rangeOfCharacterFromSet:[hexSet invertedSet]].location != NSNotFound) return NO;
+    unsigned int v = 0;
+    [[NSScanner scannerWithString:s] scanHexInt:&v];
+    if (out) *out = v;
+    return YES;
+}
+
+NSString *CTHexString(unsigned int v) { return [NSString stringWithFormat:@"%06X", v & 0xFFFFFF]; }
+
+static BOOL Custom(unsigned int *out) {
+    NSString *s = CTStr(@"accent_hex", @"");
+    return s.length && CTParseHex(s, out);
+}
+
+static unsigned int P(void) {
+    unsigned int c;
+    if (Custom(&c)) return c;
+    return [CTPalettes()[CTAccentIndex()][@"p"] unsignedIntValue];
+}
+
+static unsigned int C(void) {
+    unsigned int c;
+    if (Custom(&c)) return CTMix(c, 0xFFFFFF, 0.78);
+    return [CTPalettes()[CTAccentIndex()][@"c"] unsignedIntValue];
+}
+
+unsigned int CTCurrentPrimaryHex(void) { return P(); }
+
+void CTResetAccent(void) {
+    CTSetStr(@"accent_hex", @"");
+    CTSetInt(@"accent", 0);
+}
 
 UIColor *CTBg(void) { return CTDyn(0xFEF7FF, 0x141218); }
 UIColor *CTSurface(void) { return CTDyn(0xF3EDF7, 0x211F26); }

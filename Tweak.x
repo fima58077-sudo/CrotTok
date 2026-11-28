@@ -3,6 +3,8 @@
 #import "CTConfig.h"
 #import "CTRegion.h"
 #import "CTOverlay.h"
+#import "CTMaterial.h"
+#import "CTCore.h"
 
 // Убирает трекинг из ссылок TikTok при копировании
 static NSString *CleanLink(NSString *s) {
@@ -14,7 +16,8 @@ static NSString *CleanLink(NSString *s) {
     return c.string ?: s;
 }
 
-// ---- Подмена региона: оператор SIM
+// ================= Сеть: подмена региона =================
+
 %hook CTCarrier
 - (NSString *)isoCountryCode {
     NSDictionary *r = [CTRegion current];
@@ -34,7 +37,6 @@ static NSString *CleanLink(NSString *s) {
 }
 %end
 
-// ---- Подмена региона: региональные настройки (язык остаётся прежним)
 %hook NSLocale
 + (id)currentLocale {
     id orig = %orig;
@@ -52,7 +54,8 @@ static NSString *CleanLink(NSString *s) {
 }
 %end
 
-// ---- Чистые ссылки
+// ================= Основное: чистые ссылки =================
+
 %hook UIPasteboard
 - (void)setString:(NSString *)string {
     %orig(string ? CleanLink(string) : string);
@@ -64,6 +67,83 @@ static NSString *CleanLink(NSString *s) {
     } else {
         %orig;
     }
+}
+%end
+
+// ================= Оформление: Material You на стандартных элементах =================
+
+%hook UIWindow
+- (void)makeKeyAndVisible {
+    %orig;
+    CTThemeApplyWindow(self);
+}
+- (void)becomeKeyWindow {
+    %orig;
+    CTThemeApplyWindow(self);
+}
+%end
+
+%hook UISwitch
+- (void)didMoveToWindow {
+    %orig;
+    CTThemeApplyControl(self);
+}
+%end
+
+%hook UISlider
+- (void)didMoveToWindow {
+    %orig;
+    CTThemeApplyControl(self);
+}
+%end
+
+%hook UIProgressView
+- (void)didMoveToWindow {
+    %orig;
+    CTThemeApplyControl(self);
+}
+%end
+
+%hook UIPageControl
+- (void)didMoveToWindow {
+    %orig;
+    CTThemeApplyControl(self);
+}
+%end
+
+%hook UITextField
+- (void)didMoveToWindow {
+    %orig;
+    CTThemeApplyControl(self);
+}
+- (void)layoutSubviews {
+    %orig;
+    if (CTBool(@"mat_fields", NO)) CTThemeApplyControl(self);
+}
+%end
+
+%hook UIAlertController
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    if (CTBool(@"mat_on", YES)) self.view.tintColor = CTPrimary();
+}
+%end
+
+// ================= Оформление: форма аватарки =================
+
+%hook UIImageView
+- (void)layoutSubviews {
+    %orig;
+    CTAvatarCheck(self);
+}
+%end
+
+// ================= Вход в настройки TikTok =================
+
+%hook UIViewController
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    CTInjectCheck(self);
 }
 %end
 
