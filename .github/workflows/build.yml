@@ -1,21 +1,44 @@
+
 name: Build CrotTok
+
 on:
   push:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: macos-15
+
     steps:
-      - uses: actions/checkout@v4
-      - run: brew install ldid dpkg make xz
-      - run: git clone --recursive https://github.com/theos/theos.git $HOME/theos
-      - run: rm -rf $HOME/theos/sdks && git clone --depth=1 https://github.com/theos/sdks.git $HOME/theos/sdks
-      - run: |
-          export THEOS=$HOME/theos
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          brew install ldid dpkg make xz
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          rm -rf "$HOME/theos/sdks"
+          git clone --depth=1 https://github.com/theos/sdks.git "$HOME/theos/sdks"
+
+      - name: Build CrotTok
+        run: |
+          export THEOS="$HOME/theos"
           export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
-          make clean package FINALPACKAGE=1
-          make clean package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-      - uses: actions/upload-artifact@v4
+
+          make clean
+          make package FINALPACKAGE=1
+
+          make clean
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+
+      - name: Upload DEB packages
+        uses: actions/upload-artifact@v4
         with:
           name: CrotTok-deb
           path: packages/*.deb
+          if-no-files-found: error
